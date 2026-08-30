@@ -1,0 +1,37 @@
+name: Build 100-stock archive
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "45 13 * * 1-5"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install data packages
+        run: pip install --upgrade yfinance pandas numpy requests
+
+      - name: Download, rank and save 100 real NSE histories
+        run: python build_archive.py
+
+      - name: Commit generated archive
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet && exit 0
+          git commit -m "Refresh 100-stock one-year archive"
+          git push
